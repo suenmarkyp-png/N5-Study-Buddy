@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProgress } from "@/hooks/use-progress";
 import { flashcardWords, Word } from "@/data/vocab";
-import { Shuffle, Check, Clock, Eye, SlidersHorizontal, BookOpen } from "lucide-react";
+import { Shuffle, Check, Clock, Eye, SlidersHorizontal, BookOpen, Layers } from "lucide-react";
 
 export default function Flashcards() {
   const { knownWords, learningWords, markWordKnown, markWordLearning } = useProgress();
