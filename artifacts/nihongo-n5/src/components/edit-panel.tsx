@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Trash2, Pencil, Save, ArrowLeft } from "lucide-react";
+import { X, Plus, Trash2, Pencil, Save, ArrowLeft, Search } from "lucide-react";
 
 export interface EditField {
   key: string;
@@ -45,14 +45,32 @@ export function EditPanel({
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (!open) {
       setValues({});
       setError(null);
       setEditingId(null);
+      setSearch("");
     }
   }, [open]);
+
+  const q = search.trim().toLowerCase();
+  const visibleItems = q
+    ? items.filter((it) => {
+        const hay = [
+          it.primary,
+          it.secondary,
+          it.tertiary,
+          ...Object.values(it.values),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return hay.includes(q);
+      })
+    : items;
 
   const startEdit = (item: EditItem) => {
     setEditingId(item.id);
@@ -212,17 +230,47 @@ export function EditPanel({
               </form>
 
               {!editingId && (
-              <div className="space-y-2">
-                <h3 className="text-sm uppercase tracking-wider font-bold text-muted-foreground">
-                  Existing entries ({items.length})
-                </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <h3 className="text-sm uppercase tracking-wider font-bold text-muted-foreground">
+                    Existing entries ({visibleItems.length}
+                    {q && visibleItems.length !== items.length
+                      ? ` of ${items.length}`
+                      : ""}
+                    )
+                  </h3>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search entries..."
+                    className="w-full pl-9 pr-9 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
                 <div className="space-y-2">
                   {items.length === 0 && (
                     <p className="text-sm text-muted-foreground py-4 text-center">
                       No entries yet.
                     </p>
                   )}
-                  {items.map((it) => (
+                  {items.length > 0 && visibleItems.length === 0 && (
+                    <p className="text-sm text-muted-foreground py-4 text-center">
+                      No entries match "{search}".
+                    </p>
+                  )}
+                  {visibleItems.map((it) => (
                     <div
                       key={it.id}
                       className={`flex items-center justify-between gap-3 bg-background border rounded-xl px-4 py-3 ${
