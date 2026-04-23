@@ -25,8 +25,8 @@ interface EditPanelProps {
   title: string;
   items: EditItem[];
   fields: EditField[];
-  onAdd: (values: Record<string, string>) => void;
-  onRemove: (id: string) => void;
+  onAdd: (values: Record<string, string>) => void | Promise<void>;
+  onRemove: (id: string) => void | Promise<void>;
 }
 
 export function EditPanel({
@@ -40,8 +40,9 @@ export function EditPanel({
 }: EditPanelProps) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     for (const f of fields) {
       if (f.required && !values[f.key]?.trim()) {
@@ -49,9 +50,16 @@ export function EditPanel({
         return;
       }
     }
-    onAdd(values);
-    setValues({});
-    setError(null);
+    setSubmitting(true);
+    try {
+      await onAdd(values);
+      setValues({});
+      setError(null);
+    } catch (err) {
+      setError((err as Error).message || "Failed to save");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -153,9 +161,10 @@ export function EditPanel({
                 )}
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity"
+                  disabled={submitting}
+                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
-                  <Plus className="w-4 h-4" /> Add
+                  <Plus className="w-4 h-4" /> {submitting ? "Saving..." : "Add"}
                 </button>
               </form>
 

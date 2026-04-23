@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useCustomData } from "@/hooks/use-custom-data";
 
 import { Layout } from "@/components/layout";
 import Home from "@/pages/home";
@@ -33,6 +35,10 @@ function Router() {
 }
 
 function App() {
+  const load = useCustomData((s) => s.load);
+  useEffect(() => {
+    load();
+  }, [load]);
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
