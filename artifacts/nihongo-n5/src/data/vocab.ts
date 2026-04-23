@@ -1,4 +1,4 @@
-export type WordType = 'verb' | 'i-adj' | 'na-adj' | 'noun' | 'expression';
+export type WordType = 'verb' | 'i-adj' | 'na-adj' | 'noun' | 'expression' | 'kanji';
 
 export interface Word {
   id: string;

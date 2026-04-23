@@ -7,7 +7,7 @@ import { MessageCircle, Volume2, Settings2 } from "lucide-react";
 
 export default function Phrases() {
   const phrases = useMergedPhrases();
-  const { addPhrase, removePhrase } = useCustomData();
+  const { addPhrase, removePhrase, updatePhrase } = useCustomData();
   const [activeCategory, setActiveCategory] = useState(phraseCategories[0]);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -93,6 +93,13 @@ export default function Phrases() {
           primary: p.jp,
           secondary: `${p.romaji} — ${p.en}`,
           tertiary: p.category,
+          values: {
+            jp: p.jp,
+            romaji: p.romaji,
+            en: p.en,
+            category: p.category,
+            note: p.note ?? "",
+          },
         }))}
         fields={[
           { key: "jp", label: "Phrase (Japanese)", required: true, placeholder: "ありがとう" },
@@ -103,6 +110,15 @@ export default function Phrases() {
         ]}
         onAdd={(v) => {
           addPhrase({
+            jp: v.jp,
+            romaji: v.romaji,
+            en: v.en,
+            category: v.category,
+            note: v.note || "",
+          });
+        }}
+        onUpdate={async (id, v) => {
+          await updatePhrase(id, {
             jp: v.jp,
             romaji: v.romaji,
             en: v.en,

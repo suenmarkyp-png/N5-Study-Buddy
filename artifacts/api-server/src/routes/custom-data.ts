@@ -215,6 +215,139 @@ router.post("/custom-data/phrases", async (req, res) => {
   }
 });
 
+router.put("/custom-data/flashcards/:id", async (req, res) => {
+  const { id } = req.params;
+  const b = req.body ?? {};
+  if (
+    !requireFields(
+      b,
+      ["kanji", "kana", "romaji", "meaning", "type", "exJp", "exRomaji", "exEn"],
+      res,
+    )
+  )
+    return;
+  try {
+    if (id.startsWith("uf-")) {
+      await pool.query(
+        `UPDATE custom_flashcards SET kanji=$1, kana=$2, romaji=$3, meaning=$4, type=$5, verb_group=$6, example_jp=$7, example_romaji=$8, example_en=$9 WHERE id=$10`,
+        [b.kanji, b.kana, b.romaji, b.meaning, b.type, b.verbGroup || null, b.exJp, b.exRomaji, b.exEn, id],
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO custom_flashcards (id, kanji, kana, romaji, meaning, type, verb_group, example_jp, example_romaji, example_en)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+         ON CONFLICT (id) DO UPDATE SET kanji=EXCLUDED.kanji, kana=EXCLUDED.kana, romaji=EXCLUDED.romaji, meaning=EXCLUDED.meaning, type=EXCLUDED.type, verb_group=EXCLUDED.verb_group, example_jp=EXCLUDED.example_jp, example_romaji=EXCLUDED.example_romaji, example_en=EXCLUDED.example_en`,
+        [id, b.kanji, b.kana, b.romaji, b.meaning, b.type, b.verbGroup || null, b.exJp, b.exRomaji, b.exEn],
+      );
+      await pool.query(
+        `INSERT INTO deleted_entries (section, entry_id) VALUES ('flashcards', $1) ON CONFLICT DO NOTHING`,
+        [id],
+      );
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+router.put("/custom-data/vocab/:id", async (req, res) => {
+  const { id } = req.params;
+  const b = req.body ?? {};
+  if (
+    !requireFields(
+      b,
+      ["kanji", "kana", "romaji", "meaning", "type", "category", "exJp", "exRomaji", "exEn"],
+      res,
+    )
+  )
+    return;
+  try {
+    if (id.startsWith("uv-")) {
+      await pool.query(
+        `UPDATE custom_vocab SET kanji=$1, kana=$2, romaji=$3, meaning=$4, type=$5, category=$6, example_jp=$7, example_romaji=$8, example_en=$9 WHERE id=$10`,
+        [b.kanji, b.kana, b.romaji, b.meaning, b.type, b.category, b.exJp, b.exRomaji, b.exEn, id],
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO custom_vocab (id, kanji, kana, romaji, meaning, type, category, example_jp, example_romaji, example_en)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+         ON CONFLICT (id) DO UPDATE SET kanji=EXCLUDED.kanji, kana=EXCLUDED.kana, romaji=EXCLUDED.romaji, meaning=EXCLUDED.meaning, type=EXCLUDED.type, category=EXCLUDED.category, example_jp=EXCLUDED.example_jp, example_romaji=EXCLUDED.example_romaji, example_en=EXCLUDED.example_en`,
+        [id, b.kanji, b.kana, b.romaji, b.meaning, b.type, b.category, b.exJp, b.exRomaji, b.exEn],
+      );
+      await pool.query(
+        `INSERT INTO deleted_entries (section, entry_id) VALUES ('vocab', $1) ON CONFLICT DO NOTHING`,
+        [id],
+      );
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+router.put("/custom-data/grammar/:id", async (req, res) => {
+  const { id } = req.params;
+  const b = req.body ?? {};
+  if (
+    !requireFields(
+      b,
+      ["pattern", "romaji", "meaning", "explanation", "exJp", "exRomaji", "exEn"],
+      res,
+    )
+  )
+    return;
+  try {
+    if (id.startsWith("ug-")) {
+      await pool.query(
+        `UPDATE custom_grammar SET pattern=$1, romaji=$2, meaning=$3, explanation=$4, example_jp=$5, example_romaji=$6, example_en=$7, notes=$8 WHERE id=$9`,
+        [b.pattern, b.romaji, b.meaning, b.explanation, b.exJp, b.exRomaji, b.exEn, b.notes || "", id],
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO custom_grammar (id, pattern, romaji, meaning, explanation, example_jp, example_romaji, example_en, notes)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         ON CONFLICT (id) DO UPDATE SET pattern=EXCLUDED.pattern, romaji=EXCLUDED.romaji, meaning=EXCLUDED.meaning, explanation=EXCLUDED.explanation, example_jp=EXCLUDED.example_jp, example_romaji=EXCLUDED.example_romaji, example_en=EXCLUDED.example_en, notes=EXCLUDED.notes`,
+        [id, b.pattern, b.romaji, b.meaning, b.explanation, b.exJp, b.exRomaji, b.exEn, b.notes || ""],
+      );
+      await pool.query(
+        `INSERT INTO deleted_entries (section, entry_id) VALUES ('grammar', $1) ON CONFLICT DO NOTHING`,
+        [id],
+      );
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+router.put("/custom-data/phrases/:id", async (req, res) => {
+  const { id } = req.params;
+  const b = req.body ?? {};
+  if (!requireFields(b, ["jp", "romaji", "en", "category"], res)) return;
+  try {
+    if (id.startsWith("up-")) {
+      await pool.query(
+        `UPDATE custom_phrases SET jp=$1, romaji=$2, en=$3, category=$4, note=$5 WHERE id=$6`,
+        [b.jp, b.romaji, b.en, b.category, b.note || "", id],
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO custom_phrases (id, jp, romaji, en, category, note)
+         VALUES ($1,$2,$3,$4,$5,$6)
+         ON CONFLICT (id) DO UPDATE SET jp=EXCLUDED.jp, romaji=EXCLUDED.romaji, en=EXCLUDED.en, category=EXCLUDED.category, note=EXCLUDED.note`,
+        [id, b.jp, b.romaji, b.en, b.category, b.note || ""],
+      );
+      await pool.query(
+        `INSERT INTO deleted_entries (section, entry_id) VALUES ('phrases', $1) ON CONFLICT DO NOTHING`,
+        [id],
+      );
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
 const SECTION_TABLE: Record<string, string> = {
   flashcards: "custom_flashcards",
   vocab: "custom_vocab",

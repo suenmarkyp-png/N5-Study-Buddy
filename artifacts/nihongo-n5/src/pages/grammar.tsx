@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function GrammarGuide() {
   const grammarPoints = useMergedGrammar();
-  const { addGrammar, removeGrammar } = useCustomData();
+  const { addGrammar, removeGrammar, updateGrammar } = useCustomData();
   const [openId, setOpenId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -111,6 +111,16 @@ export default function GrammarGuide() {
           primary: g.pattern,
           secondary: g.meaning,
           tertiary: g.romaji,
+          values: {
+            pattern: g.pattern,
+            romaji: g.romaji,
+            meaning: g.meaning,
+            explanation: g.explanation,
+            exJp: g.examples[0]?.jp ?? "",
+            exRomaji: g.examples[0]?.romaji ?? "",
+            exEn: g.examples[0]?.en ?? "",
+            notes: g.notes ?? "",
+          },
         }))}
         fields={[
           { key: "pattern", label: "Pattern (Japanese)", required: true, placeholder: "〜たことがある" },
@@ -124,6 +134,16 @@ export default function GrammarGuide() {
         ]}
         onAdd={(v) => {
           addGrammar({
+            pattern: v.pattern,
+            romaji: v.romaji,
+            meaning: v.meaning,
+            explanation: v.explanation,
+            examples: [{ jp: v.exJp, romaji: v.exRomaji, en: v.exEn }],
+            notes: v.notes || "",
+          });
+        }}
+        onUpdate={async (id, v) => {
+          await updateGrammar(id, {
             pattern: v.pattern,
             romaji: v.romaji,
             meaning: v.meaning,

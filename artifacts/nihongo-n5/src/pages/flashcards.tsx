@@ -10,7 +10,7 @@ import { Shuffle, Check, Clock, Eye, BookOpen, Layers, Settings2 } from "lucide-
 export default function Flashcards() {
   const { knownWords, learningWords, markWordKnown, markWordLearning } = useProgress();
   const allCards = useMergedFlashcards();
-  const { addFlashcard, removeFlashcard } = useCustomData();
+  const { addFlashcard, removeFlashcard, updateFlashcard } = useCustomData();
 
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -89,6 +89,8 @@ export default function Flashcards() {
             <option value="all">All Types</option>
             <option value="verb">Verbs</option>
             <option value="adj">Adjectives</option>
+            <option value="noun">Nouns</option>
+            <option value="kanji">Kanji</option>
           </select>
 
           <select
@@ -197,13 +199,24 @@ export default function Flashcards() {
           primary: `${w.kanji} (${w.kana})`,
           secondary: `${w.romaji} — ${w.meaning}`,
           tertiary: w.type,
+          values: {
+            kanji: w.kanji,
+            kana: w.kana,
+            romaji: w.romaji,
+            meaning: w.meaning,
+            type: w.type,
+            verbGroup: w.verbGroup ?? "",
+            exJp: w.example.jp,
+            exRomaji: w.example.romaji,
+            exEn: w.example.en,
+          },
         }))}
         fields={[
           { key: "kanji", label: "Japanese (kanji or kana)", required: true, placeholder: "食べる" },
           { key: "kana", label: "Hiragana reading", required: true, placeholder: "たべる" },
           { key: "romaji", label: "Romaji", required: true, placeholder: "taberu" },
           { key: "meaning", label: "English meaning", required: true, placeholder: "to eat" },
-          { key: "type", label: "Part of speech", required: true, type: "select", options: ["verb", "i-adj", "na-adj", "noun", "expression"] },
+          { key: "type", label: "Part of speech", required: true, type: "select", options: ["verb", "i-adj", "na-adj", "noun", "expression", "kanji"] },
           { key: "verbGroup", label: "Verb group (optional)", type: "select", options: ["godan", "ichidan", "irregular"] },
           { key: "exJp", label: "Example (Japanese)", required: true, placeholder: "寿司を食べる", textarea: true },
           { key: "exRomaji", label: "Example (Romaji)", required: true, placeholder: "sushi o taberu", textarea: true },
@@ -222,6 +235,20 @@ export default function Flashcards() {
             example: { jp: v.exJp, romaji: v.exRomaji, en: v.exEn },
           };
           addFlashcard(word);
+        }}
+        onUpdate={async (id, v) => {
+          const word: Omit<Word, "id"> = {
+            kanji: v.kanji,
+            kana: v.kana,
+            romaji: v.romaji,
+            meaning: v.meaning,
+            type: v.type as WordType,
+            verbGroup: v.verbGroup
+              ? (v.verbGroup as "godan" | "ichidan" | "irregular")
+              : undefined,
+            example: { jp: v.exJp, romaji: v.exRomaji, en: v.exEn },
+          };
+          await updateFlashcard(id, word);
         }}
         onRemove={removeFlashcard}
       />

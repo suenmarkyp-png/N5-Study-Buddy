@@ -30,6 +30,11 @@ interface CustomDataState {
   removeVocab: (id: string) => Promise<void>;
   removeGrammar: (id: string) => Promise<void>;
   removePhrase: (id: string) => Promise<void>;
+
+  updateFlashcard: (id: string, w: Omit<Word, "id">) => Promise<void>;
+  updateVocab: (id: string, w: Omit<Word, "id">) => Promise<void>;
+  updateGrammar: (id: string, g: Omit<GrammarPoint, "id">) => Promise<void>;
+  updatePhrase: (id: string, p: Omit<Phrase, "id">) => Promise<void>;
 }
 
 async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -194,5 +199,77 @@ export const useCustomData = create<CustomDataState>()((set, get) => ({
         ? { customPhrases: s.customPhrases.filter((p) => p.id !== id) }
         : { deletedPhraseIds: { ...s.deletedPhraseIds, [id]: true } },
     );
+  },
+
+  updateFlashcard: async (id, w) => {
+    await jsonFetch(`${API_BASE}/custom-data/flashcards/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(wordPayload(w)),
+    });
+    set((s) => {
+      const exists = s.customFlashcards.some((x) => x.id === id);
+      return {
+        customFlashcards: exists
+          ? s.customFlashcards.map((x) => (x.id === id ? { ...w, id } : x))
+          : [...s.customFlashcards, { ...w, id }],
+        deletedFlashcardIds: id.startsWith("uf-")
+          ? s.deletedFlashcardIds
+          : { ...s.deletedFlashcardIds, [id]: true },
+      };
+    });
+  },
+
+  updateVocab: async (id, w) => {
+    await jsonFetch(`${API_BASE}/custom-data/vocab/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(wordPayload(w)),
+    });
+    set((s) => {
+      const exists = s.customVocab.some((x) => x.id === id);
+      return {
+        customVocab: exists
+          ? s.customVocab.map((x) => (x.id === id ? { ...w, id } : x))
+          : [...s.customVocab, { ...w, id }],
+        deletedVocabIds: id.startsWith("uv-")
+          ? s.deletedVocabIds
+          : { ...s.deletedVocabIds, [id]: true },
+      };
+    });
+  },
+
+  updateGrammar: async (id, g) => {
+    await jsonFetch(`${API_BASE}/custom-data/grammar/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(grammarPayload(g)),
+    });
+    set((s) => {
+      const exists = s.customGrammar.some((x) => x.id === id);
+      return {
+        customGrammar: exists
+          ? s.customGrammar.map((x) => (x.id === id ? { ...g, id } : x))
+          : [...s.customGrammar, { ...g, id }],
+        deletedGrammarIds: id.startsWith("ug-")
+          ? s.deletedGrammarIds
+          : { ...s.deletedGrammarIds, [id]: true },
+      };
+    });
+  },
+
+  updatePhrase: async (id, p) => {
+    await jsonFetch(`${API_BASE}/custom-data/phrases/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(p),
+    });
+    set((s) => {
+      const exists = s.customPhrases.some((x) => x.id === id);
+      return {
+        customPhrases: exists
+          ? s.customPhrases.map((x) => (x.id === id ? { ...p, id } : x))
+          : [...s.customPhrases, { ...p, id }],
+        deletedPhraseIds: id.startsWith("up-")
+          ? s.deletedPhraseIds
+          : { ...s.deletedPhraseIds, [id]: true },
+      };
+    });
   },
 }));

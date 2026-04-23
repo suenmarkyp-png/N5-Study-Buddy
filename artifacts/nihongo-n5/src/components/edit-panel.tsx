@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, Pencil, Save } from "lucide-react";
 
 export interface EditField {
   key: string;
@@ -17,6 +17,7 @@ export interface EditItem {
   primary: string;
   secondary?: string;
   tertiary?: string;
+  values: Record<string, string>;
 }
 
 interface EditPanelProps {
@@ -26,6 +27,7 @@ interface EditPanelProps {
   items: EditItem[];
   fields: EditField[];
   onAdd: (values: Record<string, string>) => void | Promise<void>;
+  onUpdate: (id: string, values: Record<string, string>) => void | Promise<void>;
   onRemove: (id: string) => void | Promise<void>;
 }
 
@@ -36,11 +38,33 @@ export function EditPanel({
   items,
   fields,
   onAdd,
+  onUpdate,
   onRemove,
 }: EditPanelProps) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setValues({});
+      setError(null);
+      setEditingId(null);
+    }
+  }, [open]);
+
+  const startEdit = (item: EditItem) => {
+    setEditingId(item.id);
+    setValues(item.values);
+    setError(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setValues({});
+    setError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,8 +76,13 @@ export function EditPanel({
     }
     setSubmitting(true);
     try {
-      await onAdd(values);
+      if (editingId) {
+        await onUpdate(editingId, values);
+      } else {
+        await onAdd(values);
+      }
       setValues({});
+      setEditingId(null);
       setError(null);
     } catch (err) {
       setError((err as Error).message || "Failed to save");
@@ -94,9 +123,20 @@ export function EditPanel({
 
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-8">
               <form onSubmit={handleSubmit} className="space-y-3">
-                <h3 className="text-sm uppercase tracking-wider font-bold text-muted-foreground">
-                  Add new
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm uppercase tracking-wider font-bold text-muted-foreground">
+                    {editingId ? "Edit entry" : "Add new"}
+                  </h3>
+                  {editingId && (
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      className="text-xs font-bold text-muted-foreground hover:text-foreground"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {fields.map((f) => (
                     <div
@@ -164,7 +204,8 @@ export function EditPanel({
                   disabled={submitting}
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
-                  <Plus className="w-4 h-4" /> {submitting ? "Saving..." : "Add"}
+                  {editingId ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  {submitting ? "Saving..." : editingId ? "Save" : "Add"}
                 </button>
               </form>
 
@@ -181,7 +222,11 @@ export function EditPanel({
                   {items.map((it) => (
                     <div
                       key={it.id}
-                      className="flex items-center justify-between gap-3 bg-background border border-border rounded-xl px-4 py-3"
+                      className={`flex items-center justify-between gap-3 bg-background border rounded-xl px-4 py-3 ${
+                        editingId === it.id
+                          ? "border-primary"
+                          : "border-border"
+                      }`}
                     >
                       <div className="min-w-0 flex-1">
                         <p className="font-jp font-bold text-foreground truncate">
@@ -198,13 +243,22 @@ export function EditPanel({
                           </p>
                         )}
                       </div>
-                      <button
-                        onClick={() => onRemove(it.id)}
-                        className="shrink-0 w-9 h-9 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive flex items-center justify-center"
-                        title="Remove"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => startEdit(it)}
+                          className="w-9 h-9 rounded-full bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center"
+                          title="Edit"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => onRemove(it.id)}
+                          className="w-9 h-9 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive flex items-center justify-center"
+                          title="Remove"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

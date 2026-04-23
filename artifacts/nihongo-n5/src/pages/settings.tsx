@@ -1,11 +1,64 @@
-import React from "react";
+import React, { useState } from "react";
 import { useProgress } from "@/hooks/use-progress";
-import { Settings as SettingsIcon, Trash2, AlertTriangle } from "lucide-react";
+import { useCustomData } from "@/hooks/use-custom-data";
+import { Settings as SettingsIcon, Trash2, AlertTriangle, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
   const { resetProgress } = useProgress();
+  const {
+    customFlashcards,
+    customVocab,
+    customGrammar,
+    customPhrases,
+    deletedFlashcardIds,
+    deletedVocabIds,
+    deletedGrammarIds,
+    deletedPhraseIds,
+  } = useCustomData();
   const { toast } = useToast();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = () => {
+    setExporting(true);
+    try {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        version: 1,
+        customFlashcards,
+        customVocab,
+        customGrammar,
+        customPhrases,
+        deletedFlashcardIds,
+        deletedVocabIds,
+        deletedGrammarIds,
+        deletedPhraseIds,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `nihongo-n5-backup-${stamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({
+        title: "Backup downloaded",
+        description: "Your custom entries have been exported.",
+      });
+    } catch (err) {
+      toast({
+        title: "Export failed",
+        description: (err as Error).message,
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleReset = () => {
     if (window.confirm("Are you sure you want to reset all your progress? This cannot be undone.")) {
@@ -37,6 +90,21 @@ export default function Settings() {
           <p className="text-sm text-muted-foreground mt-4">
             Version 1.0.0
           </p>
+        </div>
+
+        <div className="p-6 border-b border-border">
+          <h2 className="text-xl font-bold text-foreground mb-2">Backup</h2>
+          <p className="text-muted-foreground mb-4">
+            Download a JSON backup of every entry you have added or removed in Manage.
+          </p>
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            <Download className="w-5 h-5" />
+            {exporting ? "Preparing..." : "Export Backup"}
+          </button>
         </div>
 
         <div className="p-6 bg-destructive/5">

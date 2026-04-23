@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function VocabBuilder() {
   const { knownWords, markWordKnown, markWordLearning } = useProgress();
   const allWords = useMergedVocab();
-  const { addVocab, removeVocab } = useCustomData();
+  const { addVocab, removeVocab, updateVocab } = useCustomData();
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [editOpen, setEditOpen] = useState(false);
@@ -151,13 +151,24 @@ export default function VocabBuilder() {
           primary: `${w.kanji} (${w.kana})`,
           secondary: `${w.romaji} — ${w.meaning}`,
           tertiary: w.category,
+          values: {
+            kanji: w.kanji,
+            kana: w.kana,
+            romaji: w.romaji,
+            meaning: w.meaning,
+            type: w.type,
+            category: w.category ?? "",
+            exJp: w.example.jp,
+            exRomaji: w.example.romaji,
+            exEn: w.example.en,
+          },
         }))}
         fields={[
           { key: "kanji", label: "Japanese (kanji or kana)", required: true, placeholder: "猫" },
           { key: "kana", label: "Hiragana reading", required: true, placeholder: "ねこ" },
           { key: "romaji", label: "Romaji", required: true, placeholder: "neko" },
           { key: "meaning", label: "English meaning", required: true, placeholder: "cat" },
-          { key: "type", label: "Part of speech", required: true, type: "select", options: ["verb", "i-adj", "na-adj", "noun", "expression"] },
+          { key: "type", label: "Part of speech", required: true, type: "select", options: ["verb", "i-adj", "na-adj", "noun", "expression", "kanji"] },
           { key: "category", label: "Category", required: true, type: "select", options: vocabCategories },
           { key: "exJp", label: "Example (Japanese)", required: true, textarea: true, placeholder: "猫が好きです。" },
           { key: "exRomaji", label: "Example (Romaji)", required: true, textarea: true, placeholder: "Neko ga suki desu." },
@@ -174,6 +185,18 @@ export default function VocabBuilder() {
             example: { jp: v.exJp, romaji: v.exRomaji, en: v.exEn },
           };
           addVocab(w);
+        }}
+        onUpdate={async (id, v) => {
+          const w: Omit<Word, "id"> = {
+            kanji: v.kanji,
+            kana: v.kana,
+            romaji: v.romaji,
+            meaning: v.meaning,
+            type: v.type as WordType,
+            category: v.category,
+            example: { jp: v.exJp, romaji: v.exRomaji, en: v.exEn },
+          };
+          await updateVocab(id, w);
         }}
         onRemove={removeVocab}
       />
