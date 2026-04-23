@@ -31,7 +31,14 @@ export default function Flashcards() {
       filtered = filtered.filter((w) => !knownWords[w.id]);
     }
     if (shuffleSeed > 0) {
-      filtered = [...filtered].sort(() => Math.random() - 0.5);
+      // Fisher–Yates shuffle: reorders whole card objects so
+      // each card's title + meaning stay paired together.
+      const arr = [...filtered];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      filtered = arr;
     }
     return filtered;
   }, [allCards, filterType, filterStatus, knownWords, learningWords, shuffleSeed]);
