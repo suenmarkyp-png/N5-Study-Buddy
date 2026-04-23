@@ -1,7 +1,19 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useProgress } from "@/hooks/use-progress";
-import { useCustomData } from "@/hooks/use-custom-data";
-import { Settings as SettingsIcon, Trash2, AlertTriangle, Download } from "lucide-react";
+import { useCustomData, type BackupPayload } from "@/hooks/use-custom-data";
+import {
+  useMergedFlashcards,
+  useMergedVocab,
+  useMergedGrammar,
+  useMergedPhrases,
+} from "@/hooks/use-merged-data";
+import {
+  Settings as SettingsIcon,
+  Trash2,
+  AlertTriangle,
+  Download,
+  Upload,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
@@ -18,6 +30,13 @@ export default function Settings() {
   } = useCustomData();
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const importBackup = useCustomData((s) => s.importBackup);
+  const allFlashcards = useMergedFlashcards();
+  const allVocab = useMergedVocab();
+  const allGrammar = useMergedGrammar();
+  const allPhrases = useMergedPhrases();
 
   const handleExport = () => {
     setExporting(true);
@@ -25,6 +44,10 @@ export default function Settings() {
       const payload = {
         exportedAt: new Date().toISOString(),
         version: 1,
+        flashcards: allFlashcards,
+        vocab: allVocab,
+        grammar: allGrammar,
+        phrases: allPhrases,
         customFlashcards,
         customVocab,
         customGrammar,
@@ -57,6 +80,40 @@ export default function Settings() {
       });
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (
+      !window.confirm(
+        "Importing will replace your current entries with the contents of this backup. Continue?",
+      )
+    ) {
+      return;
+    }
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text) as BackupPayload;
+      await importBackup(data);
+      toast({
+        title: "Backup restored",
+        description: "Your entries have been restored from the backup.",
+      });
+    } catch (err) {
+      toast({
+        title: "Import failed",
+        description: (err as Error).message,
+      });
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -97,14 +154,31 @@ export default function Settings() {
           <p className="text-muted-foreground mb-4">
             Download a JSON backup of every entry you have added or removed in Manage.
           </p>
-          <button
-            onClick={handleExport}
-            disabled={exporting}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            <Download className="w-5 h-5" />
-            {exporting ? "Preparing..." : "Export Backup"}
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              <Download className="w-5 h-5" />
+              {exporting ? "Preparing..." : "Export Backup"}
+            </button>
+            <button
+              onClick={handleImportClick}
+              disabled={importing}
+              className="flex items-center gap-2 px-4 py-2 bg-card border border-border text-foreground rounded-lg font-bold hover:bg-muted transition-colors disabled:opacity-50"
+            >
+              <Upload className="w-5 h-5" />
+              {importing ? "Restoring..." : "Import Backup"}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+          </div>
         </div>
 
         <div className="p-6 bg-destructive/5">

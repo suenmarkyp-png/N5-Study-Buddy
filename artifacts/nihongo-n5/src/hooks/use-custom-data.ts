@@ -35,6 +35,19 @@ interface CustomDataState {
   updateVocab: (id: string, w: Omit<Word, "id">) => Promise<void>;
   updateGrammar: (id: string, g: Omit<GrammarPoint, "id">) => Promise<void>;
   updatePhrase: (id: string, p: Omit<Phrase, "id">) => Promise<void>;
+
+  importBackup: (payload: BackupPayload) => Promise<void>;
+}
+
+export interface BackupPayload {
+  customFlashcards?: Word[];
+  customVocab?: Word[];
+  customGrammar?: GrammarPoint[];
+  customPhrases?: Phrase[];
+  deletedFlashcardIds?: Record<string, boolean> | string[];
+  deletedVocabIds?: Record<string, boolean> | string[];
+  deletedGrammarIds?: Record<string, boolean> | string[];
+  deletedPhraseIds?: Record<string, boolean> | string[];
 }
 
 async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -253,6 +266,15 @@ export const useCustomData = create<CustomDataState>()((set, get) => ({
           : { ...s.deletedGrammarIds, [id]: true },
       };
     });
+  },
+
+  importBackup: async (payload) => {
+    await jsonFetch(`${API_BASE}/custom-data/restore`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    set({ loaded: false });
+    await get().load();
   },
 
   updatePhrase: async (id, p) => {

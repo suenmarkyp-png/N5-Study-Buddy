@@ -73,6 +73,118 @@ router.get("/custom-data", async (_req, res) => {
   }
 });
 
+router.post("/custom-data/restore", async (req, res) => {
+  const b = (req.body ?? {}) as {
+    customFlashcards?: any[];
+    customVocab?: any[];
+    customGrammar?: any[];
+    customPhrases?: any[];
+    deletedFlashcardIds?: Record<string, boolean> | string[];
+    deletedVocabIds?: Record<string, boolean> | string[];
+    deletedGrammarIds?: Record<string, boolean> | string[];
+    deletedPhraseIds?: Record<string, boolean> | string[];
+  };
+
+  const toIdList = (v: Record<string, boolean> | string[] | undefined) => {
+    if (!v) return [];
+    if (Array.isArray(v)) return v;
+    return Object.entries(v)
+      .filter(([, on]) => !!on)
+      .map(([id]) => id);
+  };
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("TRUNCATE custom_flashcards, custom_vocab, custom_grammar, custom_phrases, deleted_entries");
+
+    for (const w of b.customFlashcards ?? []) {
+      await client.query(
+        `INSERT INTO custom_flashcards (id, kanji, kana, romaji, meaning, type, verb_group, example_jp, example_romaji, example_en)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        [
+          w.id,
+          w.kanji,
+          w.kana,
+          w.romaji,
+          w.meaning,
+          w.type,
+          w.verbGroup ?? null,
+          w.example?.jp ?? "",
+          w.example?.romaji ?? "",
+          w.example?.en ?? "",
+        ],
+      );
+    }
+    for (const w of b.customVocab ?? []) {
+      await client.query(
+        `INSERT INTO custom_vocab (id, kanji, kana, romaji, meaning, type, category, example_jp, example_romaji, example_en)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        [
+          w.id,
+          w.kanji,
+          w.kana,
+          w.romaji,
+          w.meaning,
+          w.type,
+          w.category ?? null,
+          w.example?.jp ?? "",
+          w.example?.romaji ?? "",
+          w.example?.en ?? "",
+        ],
+      );
+    }
+    for (const g of b.customGrammar ?? []) {
+      const ex = g.examples?.[0] ?? {};
+      await client.query(
+        `INSERT INTO custom_grammar (id, pattern, romaji, meaning, explanation, example_jp, example_romaji, example_en, notes)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [
+          g.id,
+          g.pattern,
+          g.romaji,
+          g.meaning,
+          g.explanation,
+          ex.jp ?? "",
+          ex.romaji ?? "",
+          ex.en ?? "",
+          g.notes ?? "",
+        ],
+      );
+    }
+    for (const p of b.customPhrases ?? []) {
+      await client.query(
+        `INSERT INTO custom_phrases (id, jp, romaji, en, category, note)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [p.id, p.jp, p.romaji, p.en, p.category, p.note ?? ""],
+      );
+    }
+
+    const sections: Array<[string, string[]]> = [
+      ["flashcards", toIdList(b.deletedFlashcardIds)],
+      ["vocab", toIdList(b.deletedVocabIds)],
+      ["grammar", toIdList(b.deletedGrammarIds)],
+      ["phrases", toIdList(b.deletedPhraseIds)],
+    ];
+    for (const [section, ids] of sections) {
+      for (const id of ids) {
+        await client.query(
+          `INSERT INTO deleted_entries (section, entry_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+          [section, id],
+        );
+      }
+    }
+
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: (err as Error).message });
+  } finally {
+    client.release();
+  }
+});
+
 const requireFields = (
   body: Record<string, unknown>,
   keys: string[],
