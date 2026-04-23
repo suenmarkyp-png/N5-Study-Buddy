@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Trash2, Pencil, Save } from "lucide-react";
+import { X, Plus, Trash2, Pencil, Save, ArrowLeft } from "lucide-react";
 
 export interface EditField {
   key: string;
@@ -110,9 +110,20 @@ export function EditPanel({
             className="bg-card rounded-3xl border border-card-border w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
           >
             <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-              <h2 className="text-xl font-bold text-foreground">
-                Manage {title}
-              </h2>
+              <div className="flex items-center gap-3 min-w-0">
+                {editingId && (
+                  <button
+                    onClick={cancelEdit}
+                    className="w-9 h-9 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-muted-foreground shrink-0"
+                    title="Back"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                )}
+                <h2 className="text-xl font-bold text-foreground truncate">
+                  {editingId ? `Edit ${title} entry` : `Manage ${title}`}
+                </h2>
+              </div>
               <button
                 onClick={onClose}
                 className="w-9 h-9 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-muted-foreground"
@@ -123,20 +134,11 @@ export function EditPanel({
 
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-8">
               <form onSubmit={handleSubmit} className="space-y-3">
-                <div className="flex items-center justify-between">
+                {!editingId && (
                   <h3 className="text-sm uppercase tracking-wider font-bold text-muted-foreground">
-                    {editingId ? "Edit entry" : "Add new"}
+                    Add new
                   </h3>
-                  {editingId && (
-                    <button
-                      type="button"
-                      onClick={cancelEdit}
-                      className="text-xs font-bold text-muted-foreground hover:text-foreground"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {fields.map((f) => (
                     <div
@@ -209,6 +211,7 @@ export function EditPanel({
                 </button>
               </form>
 
+              {!editingId && (
               <div className="space-y-2">
                 <h3 className="text-sm uppercase tracking-wider font-bold text-muted-foreground">
                   Existing entries ({items.length})
@@ -263,6 +266,7 @@ export function EditPanel({
                   ))}
                 </div>
               </div>
+              )}
             </div>
           </motion.div>
         </motion.div>
