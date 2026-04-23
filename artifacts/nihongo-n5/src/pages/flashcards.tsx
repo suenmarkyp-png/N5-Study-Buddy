@@ -16,32 +16,31 @@ export default function Flashcards() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [editOpen, setEditOpen] = useState(false);
 
-  const [shuffleSeed, setShuffleSeed] = useState(0);
+  const [shuffleOrder, setShuffleOrder] = useState<string[] | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
 
   const deck = useMemo(() => {
-    let filtered = [...allCards];
-    if (filterType !== "all") {
-      filtered = filtered.filter((w) => w.type.includes(filterType));
-    }
-    if (filterStatus === "learning") {
-      filtered = filtered.filter((w) => learningWords[w.id]);
-    } else if (filterStatus === "review") {
-      filtered = filtered.filter((w) => !knownWords[w.id]);
-    }
-    if (shuffleSeed > 0) {
-      // Fisher–Yates shuffle: reorders whole card objects so
-      // each card's title + meaning stay paired together.
-      const arr = [...filtered];
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      filtered = arr;
+    let filtered = allCards.filter((w) => {
+      if (filterType !== "all" && !w.type.includes(filterType)) return false;
+      if (filterStatus === "learning" && !learningWords[w.id]) return false;
+      if (filterStatus === "review" && knownWords[w.id]) return false;
+      return true;
+    });
+
+    if (shuffleOrder) {
+      const rank = new Map(shuffleOrder.map((id, i) => [id, i]));
+      filtered = [...filtered].sort((a, b) => {
+        const ra = rank.get(a.id);
+        const rb = rank.get(b.id);
+        if (ra === undefined && rb === undefined) return 0;
+        if (ra === undefined) return 1;
+        if (rb === undefined) return -1;
+        return ra - rb;
+      });
     }
     return filtered;
-  }, [allCards, filterType, filterStatus, knownWords, learningWords, shuffleSeed]);
+  }, [allCards, filterType, filterStatus, knownWords, learningWords, shuffleOrder]);
 
   React.useEffect(() => {
     setCurrentIndex(0);
@@ -49,7 +48,15 @@ export default function Flashcards() {
   }, [filterType, filterStatus]);
 
   const shuffleDeck = () => {
-    setShuffleSeed((s) => s + 1);
+    // Fisher–Yates shuffle, computed ONCE per click. Storing the
+    // resulting id order in state prevents re-shuffling on every
+    // render (which would desync card front and back).
+    const ids = allCards.map((w) => w.id);
+    for (let i = ids.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+    }
+    setShuffleOrder(ids);
     setCurrentIndex(0);
     setIsFlipped(false);
   };
