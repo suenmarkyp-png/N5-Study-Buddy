@@ -163,7 +163,7 @@ export default function Flashcards() {
                 {!isFlipped ? (
                   <div className="w-full h-full bg-card border-2 border-card-border rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-md relative overflow-hidden group-hover:border-primary/30 transition-colors">
                     <span className="absolute top-6 left-6 text-xs font-bold uppercase tracking-wider text-muted-foreground bg-muted px-3 py-1 rounded-full">
-                      {currentWord.type} {currentWord.verbGroup ? `(${currentWord.verbGroup})` : ""}
+                      {currentWord.type.split(",").join(" · ")} {currentWord.verbGroup ? `(${currentWord.verbGroup})` : ""}
                     </span>
                     <h2 className="text-6xl md:text-8xl font-jp font-bold text-foreground mb-6">{currentWord.kanji}</h2>
                     <div className="flex items-center gap-2 text-muted-foreground mt-8">
@@ -173,7 +173,7 @@ export default function Flashcards() {
                   </div>
                 ) : (
                   <div className="w-full h-full bg-card border-2 border-primary/20 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-md relative overflow-hidden">
-                    <span className="absolute top-6 left-6 text-xs font-bold uppercase tracking-wider text-muted-foreground bg-muted px-3 py-1 rounded-full">{currentWord.type}</span>
+                    <span className="absolute top-6 left-6 text-xs font-bold uppercase tracking-wider text-muted-foreground bg-muted px-3 py-1 rounded-full">{currentWord.type.split(",").join(" · ")}</span>
                     <div className="space-y-6 w-full">
                       <div>
                         <p className="text-2xl font-jp text-muted-foreground mb-1">{currentWord.kana}</p>
@@ -230,7 +230,7 @@ export default function Flashcards() {
           { key: "kana", label: "Hiragana reading", required: true, placeholder: "たべる" },
           { key: "romaji", label: "Romaji", required: true, placeholder: "taberu" },
           { key: "meaning", label: "English meaning", required: true, placeholder: "to eat" },
-          { key: "type", label: "Part of speech", required: true, type: "select", options: ["verb", "i-adj", "na-adj", "noun", "expression", "kanji"] },
+          { key: "type", label: "Part of speech (choose one or more)", required: true, type: "multiSelect", options: ["verb", "i-adj", "na-adj", "noun", "expression", "kanji"] },
           { key: "verbGroup", label: "Verb group (optional)", type: "select", options: ["godan", "ichidan", "irregular"] },
           { key: "exJp", label: "Example (Japanese)", required: true, placeholder: "寿司を食べる", textarea: true },
           { key: "exRomaji", label: "Example (Romaji)", required: true, placeholder: "sushi o taberu", textarea: true },

@@ -8,7 +8,7 @@ export interface EditField {
   placeholder?: string;
   required?: boolean;
   textarea?: boolean;
-  type?: "text" | "select";
+  type?: "text" | "select" | "multiSelect";
   options?: string[];
 }
 
@@ -187,6 +187,38 @@ export function EditPanel({
                             </option>
                           ))}
                         </select>
+                      ) : f.type === "multiSelect" ? (
+                        <div className="flex flex-wrap gap-2 bg-background border border-border rounded-lg px-3 py-2">
+                          {f.options?.map((o) => {
+                            const selected = (values[f.key] || "")
+                              .split(",")
+                              .map((s) => s.trim())
+                              .filter(Boolean);
+                            const isOn = selected.includes(o);
+                            return (
+                              <button
+                                type="button"
+                                key={o}
+                                onClick={() => {
+                                  const next = isOn
+                                    ? selected.filter((s) => s !== o)
+                                    : [...selected, o];
+                                  setValues((v) => ({
+                                    ...v,
+                                    [f.key]: next.join(","),
+                                  }));
+                                }}
+                                className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
+                                  isOn
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "bg-background text-muted-foreground border-border hover:border-primary/40"
+                                }`}
+                              >
+                                {o}
+                              </button>
+                            );
+                          })}
+                        </div>
                       ) : f.textarea ? (
                         <textarea
                           value={values[f.key] || ""}
