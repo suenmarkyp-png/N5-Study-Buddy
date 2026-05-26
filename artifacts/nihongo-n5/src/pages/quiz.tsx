@@ -1,8 +1,18 @@
 import React, { useState } from "react";
 import { useProgress } from "@/hooks/use-progress";
-import { allWords, Word } from "@/data/vocab";
+import { Word } from "@/data/vocab";
+import { useMergedFlashcards } from "@/hooks/use-merged-data";
 import { Target, CheckCircle2, XCircle, ArrowRight, RotateCcw, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+function fisherYates<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 type Question = {
   word: Word;
@@ -12,7 +22,8 @@ type Question = {
 
 export default function Quiz() {
   const { recordQuizResult } = useProgress();
-  
+  const allWords = useMergedFlashcards();
+
   const [isStarted, setIsStarted] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [quizLength, setQuizLength] = useState(10);
@@ -25,21 +36,19 @@ export default function Quiz() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   const startQuiz = () => {
-    // Generate questions
-    const shuffled = [...allWords].sort(() => Math.random() - 0.5).slice(0, quizLength);
-    
+    const count = Math.min(quizLength, allWords.length);
+    const shuffled = fisherYates(allWords).slice(0, count);
+
     const qs: Question[] = shuffled.map(word => {
-      // 50/50 meaning or reading question
       const isMeaning = Math.random() > 0.5;
-      
-      let correctAnswer = isMeaning ? word.meaning : word.romaji;
-      let wrongOptions = allWords
-        .filter(w => w.id !== word.id)
-        .sort(() => Math.random() - 0.5)
+      const correctAnswer = isMeaning ? word.meaning : word.romaji;
+      const wrongOptions = fisherYates(
+        allWords.filter(w => w.id !== word.id)
+      )
         .slice(0, 3)
         .map(w => isMeaning ? w.meaning : w.romaji);
-        
-      const options = [...wrongOptions, correctAnswer].sort(() => Math.random() - 0.5);
+
+      const options = fisherYates([...wrongOptions, correctAnswer]);
       
       return {
         word,
@@ -103,8 +112,8 @@ export default function Quiz() {
         <div className="w-full bg-card border border-border rounded-2xl p-6 space-y-6">
           <div>
             <label className="block text-sm font-bold text-muted-foreground mb-3">Number of Questions</label>
-            <div className="grid grid-cols-3 gap-3">
-              {[10, 20, 30].map(n => (
+            <div className="grid grid-cols-5 gap-3">
+              {[10, 20, 30, 40, 50].map(n => (
                 <button
                   key={n}
                   onClick={() => setQuizLength(n)}
