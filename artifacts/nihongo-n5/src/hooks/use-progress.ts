@@ -1,9 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export interface WordStat {
+  correct: number;
+  incorrect: number;
+}
+
 interface ProgressState {
   knownWords: Record<string, boolean>; // word id -> true
   learningWords: Record<string, boolean>; // word id -> true
+  wordStats: Record<string, WordStat>; // word id -> { correct, incorrect }
   quizStats: {
     totalQuizzes: number;
     totalCorrect: number;
@@ -16,6 +22,7 @@ interface ProgressState {
   hasSeenOnboarding: boolean;
   markWordKnown: (id: string) => void;
   markWordLearning: (id: string) => void;
+  recordWordResult: (id: string, wasCorrect: boolean) => void;
   recordQuizResult: (correct: number, total: number) => void;
   completeOnboarding: () => void;
   resetProgress: () => void;
@@ -26,6 +33,7 @@ export const useProgress = create<ProgressState>()(
     (set) => ({
       knownWords: {},
       learningWords: {},
+      wordStats: {},
       quizStats: {
         totalQuizzes: 0,
         totalCorrect: 0,
@@ -54,6 +62,20 @@ export const useProgress = create<ProgressState>()(
           return {
             learningWords: { ...state.learningWords, [id]: true },
             knownWords: newKnown,
+          };
+        }),
+
+      recordWordResult: (id, wasCorrect) =>
+        set((state) => {
+          const prev = state.wordStats[id] ?? { correct: 0, incorrect: 0 };
+          return {
+            wordStats: {
+              ...state.wordStats,
+              [id]: {
+                correct: prev.correct + (wasCorrect ? 1 : 0),
+                incorrect: prev.incorrect + (wasCorrect ? 0 : 1),
+              },
+            },
           };
         }),
 
@@ -94,6 +116,7 @@ export const useProgress = create<ProgressState>()(
         set({
           knownWords: {},
           learningWords: {},
+          wordStats: {},
           quizStats: {
             totalQuizzes: 0,
             totalCorrect: 0,
