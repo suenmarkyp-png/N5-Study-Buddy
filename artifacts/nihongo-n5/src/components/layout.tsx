@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { BookOpen, Layers, Target, BookType, MessageCircle, Home, Settings, CheckCircle2 } from "lucide-react";
+import { BookOpen, Layers, Target, BookType, MessageCircle, Home, Settings, CheckCircle2, Zap } from "lucide-react";
 import { useProgress } from "@/hooks/use-progress";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -12,6 +12,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/flashcards", label: "Cards", icon: Layers },
     { href: "/vocab", label: "Vocab", icon: BookType },
     { href: "/quiz", label: "Quiz", icon: Target },
+    { href: "/quiz/teform", label: "て-Form", icon: Zap },
     { href: "/grammar", label: "Grammar", icon: BookOpen },
     { href: "/phrases", label: "Phrases", icon: MessageCircle },
   ];
