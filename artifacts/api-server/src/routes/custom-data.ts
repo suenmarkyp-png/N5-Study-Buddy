@@ -477,7 +477,8 @@ const SECTION_PREFIX: Record<string, string> = {
 router.delete(
   "/custom-data/:section/:id",
   async (req: Request, res: Response) => {
-    const { section, id } = req.params;
+    const section = req.params.section as string;
+    const id = req.params.id as string;
     const table = SECTION_TABLE[section];
     if (!table) {
       res.status(400).json({ error: "Invalid section" });

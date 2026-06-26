@@ -15,6 +15,7 @@ import QuizTaForm from "@/pages/quiz-taform";
 import QuizNaiForm from "@/pages/quiz-naiform";
 import QuizMasuForm from "@/pages/quiz-masuform";
 import GrammarGuide from "@/pages/grammar";
+import Chat from "@/pages/chat";
 import Phrases from "@/pages/phrases";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
@@ -34,6 +35,7 @@ function Router() {
         <Route path="/quiz/naiform" component={QuizNaiForm} />
         <Route path="/quiz/masuform" component={QuizMasuForm} />
         <Route path="/grammar" component={GrammarGuide} />
+        <Route path="/chat" component={Chat} />
         <Route path="/phrases" component={Phrases} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />

@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { BookOpen, Layers, Target, BookType, MessageCircle, Home, Settings, Zap, Clock, Ban, Star, ChevronRight } from "lucide-react";
+import { BookOpen, Layers, Target, BookType, MessageCircle, Home, Settings, Zap, Clock, Ban, Star, ChevronRight, BotMessageSquare } from "lucide-react";
 import { useProgress } from "@/hooks/use-progress";
 
 const quizSubItems = [
@@ -16,6 +16,7 @@ const mainNavItems = [
   { href: "/flashcards", label: "Cards",   icon: Layers },
   { href: "/vocab",      label: "Vocab",   icon: BookType },
   { href: "/quiz",       label: "Quiz",    icon: Target },
+  { href: "/chat",       label: "AI Tutor", icon: BotMessageSquare },
   { href: "/grammar",    label: "Grammar", icon: BookOpen },
   { href: "/phrases",    label: "Phrases", icon: MessageCircle },
 ];
@@ -144,7 +145,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col w-full max-w-4xl mx-auto">
+      <main className={`flex-1 flex flex-col w-full ${location === "/chat" ? "" : "max-w-4xl mx-auto"}`}>
         {/* Mobile quiz sub-nav — shown on any quiz sub-route */}
         {isOnQuiz && (
           <div className="md:hidden sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border px-3 py-2">
