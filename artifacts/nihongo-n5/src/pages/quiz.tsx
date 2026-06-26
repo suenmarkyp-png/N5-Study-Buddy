@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useProgress } from "@/hooks/use-progress";
 import { Word } from "@/data/vocab";
-import { useMergedFlashcards } from "@/hooks/use-merged-data";
+import { useMergedFlashcards, useMergedVocab } from "@/hooks/use-merged-data";
 import { Target, CheckCircle2, XCircle, ArrowRight, RotateCcw, Trophy, Flame } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -22,7 +22,14 @@ type Question = {
 
 export default function Quiz() {
   const { recordQuizResult, recordWordResult, wordStats } = useProgress();
-  const allWords = useMergedFlashcards();
+  const flashcards = useMergedFlashcards();
+  const vocab = useMergedVocab();
+  const seen = new Set<string>();
+  const allWords = [...flashcards, ...vocab].filter(w => {
+    if (seen.has(w.id)) return false;
+    seen.add(w.id);
+    return true;
+  });
 
   const [isStarted, setIsStarted] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
