@@ -1,5 +1,20 @@
 import { Word } from "@/data/vocab";
 
+// Converts て-form kana/romaji to た-form by replacing final て→た, で→だ
+function teToTa(kana: string, romaji: string, rule: string): TeForm {
+  const taKana = kana.endsWith('で')
+    ? kana.slice(0, -1) + 'だ'
+    : kana.slice(0, -1) + 'た';
+  const taRomaji = romaji.endsWith('de')
+    ? romaji.slice(0, -2) + 'da'
+    : romaji.slice(0, -2) + 'ta';
+  const taRule = rule.replace('て', 'た').replace('で', 'だ')
+    .replace('te', 'ta').replace('de', 'da')
+    .replace('shite', 'shita').replace('ite', 'ita').replace('ide', 'ida')
+    .replace('nde', 'nda').replace('tte', 'tta').replace('kite', 'kita');
+  return { kana: taKana, romaji: taRomaji, rule: taRule };
+}
+
 export interface TeForm {
   kana: string;
   romaji: string;
@@ -90,4 +105,10 @@ export function getTeForm(word: Word): TeForm | null {
     default:
       return null;
   }
+}
+
+export function getTaForm(word: Word): TeForm | null {
+  const tf = getTeForm(word);
+  if (!tf) return null;
+  return teToTa(tf.kana, tf.romaji, tf.rule);
 }

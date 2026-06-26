@@ -11,6 +11,7 @@ import Flashcards from "@/pages/flashcards";
 import VocabBuilder from "@/pages/vocab";
 import Quiz from "@/pages/quiz";
 import QuizTeForm from "@/pages/quiz-teform";
+import QuizTaForm from "@/pages/quiz-taform";
 import GrammarGuide from "@/pages/grammar";
 import Phrases from "@/pages/phrases";
 import Settings from "@/pages/settings";
@@ -27,6 +28,7 @@ function Router() {
         <Route path="/vocab" component={VocabBuilder} />
         <Route path="/quiz" component={Quiz} />
         <Route path="/quiz/teform" component={QuizTeForm} />
+        <Route path="/quiz/taform" component={QuizTaForm} />
         <Route path="/grammar" component={GrammarGuide} />
         <Route path="/phrases" component={Phrases} />
         <Route path="/settings" component={Settings} />
