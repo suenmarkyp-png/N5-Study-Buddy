@@ -112,3 +112,51 @@ export function getTaForm(word: Word): TeForm | null {
   if (!tf) return null;
   return teToTa(tf.kana, tf.romaji, tf.rule);
 }
+
+// ない-form: godan changes last kana to あ-row + ない (う→わ is a special exception)
+const GODAN_NAI: Record<string, { kana: string; romajiDrop: number; romajiAdd: string; rule: string }> = {
+  'う': { kana: 'わない', romajiDrop: 1,  romajiAdd: 'wanai',  rule: 'う → わない (u→wanai)' },
+  'つ': { kana: 'たない', romajiDrop: 3,  romajiAdd: 'tanai',  rule: 'つ → たない (tsu→tanai)' },
+  'る': { kana: 'らない', romajiDrop: 2,  romajiAdd: 'ranai',  rule: 'る (godan) → らない (ru→ranai)' },
+  'む': { kana: 'まない', romajiDrop: 2,  romajiAdd: 'manai',  rule: 'む → まない (mu→manai)' },
+  'ぶ': { kana: 'ばない', romajiDrop: 2,  romajiAdd: 'banai',  rule: 'ぶ → ばない (bu→banai)' },
+  'ぬ': { kana: 'なない', romajiDrop: 2,  romajiAdd: 'nanai',  rule: 'ぬ → なない (nu→nanai)' },
+  'く': { kana: 'かない', romajiDrop: 2,  romajiAdd: 'kanai',  rule: 'く → かない (ku→kanai)' },
+  'ぐ': { kana: 'がない', romajiDrop: 2,  romajiAdd: 'ganai',  rule: 'ぐ → がない (gu→ganai)' },
+  'す': { kana: 'さない', romajiDrop: 2,  romajiAdd: 'sanai',  rule: 'す → さない (su→sanai)' },
+};
+
+export function getNaiForm(word: Word): TeForm | null {
+  const { kana, romaji, verbGroup } = word;
+  if (!verbGroup) return null;
+
+  if (verbGroup === 'irregular') {
+    if (kana.endsWith('する')) {
+      const base = kana.slice(0, -2);
+      const romajiBase = romaji.slice(0, -4);
+      return { kana: base + 'しない', romaji: romajiBase + 'shinai', rule: 'する → しない (suru→shinai)' };
+    }
+    if (kana === 'くる') {
+      return { kana: 'こない', romaji: 'konai', rule: 'くる → こない (kuru→konai)' };
+    }
+    return null;
+  }
+
+  if (verbGroup === 'ichidan') {
+    return {
+      kana: kana.slice(0, -1) + 'ない',
+      romaji: romaji.slice(0, -2) + 'nai',
+      rule: 'る-verb (ichidan): drop る → add ない',
+    };
+  }
+
+  // Godan
+  const lastKana = kana.slice(-1);
+  const map = GODAN_NAI[lastKana];
+  if (!map) return null;
+  return {
+    kana: kana.slice(0, -1) + map.kana,
+    romaji: romaji.slice(0, -map.romajiDrop) + map.romajiAdd,
+    rule: map.rule,
+  };
+}
