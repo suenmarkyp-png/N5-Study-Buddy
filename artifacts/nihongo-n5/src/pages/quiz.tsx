@@ -35,6 +35,7 @@ export default function Quiz() {
   const [isFinished, setIsFinished] = useState(false);
   const [quizLength, setQuizLength] = useState(10);
   const [weakMode, setWeakMode] = useState(false);
+  const [filterType, setFilterType] = useState<string | null>(null);
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -57,12 +58,17 @@ export default function Quiz() {
     });
 
   const startQuiz = () => {
+    const typePool = filterType
+      ? allWords.filter(w => w.type.split(",").map(s => s.trim()).includes(filterType))
+      : allWords;
+
     let pool: Word[];
     if (weakMode && weakWords.length >= 4) {
-      const top = weakWords.slice(0, quizLength);
-      pool = top.length >= quizLength ? top : fisherYates([...top, ...allWords.filter(w => !top.find(t => t.id === w.id))]).slice(0, quizLength);
+      const weakFiltered = weakWords.filter(w => typePool.find(t => t.id === w.id));
+      const top = weakFiltered.length >= 4 ? weakFiltered.slice(0, quizLength) : typePool.slice(0, quizLength);
+      pool = top.length >= quizLength ? top : fisherYates([...top, ...typePool.filter(w => !top.find(t => t.id === w.id))]).slice(0, quizLength);
     } else {
-      pool = fisherYates(allWords).slice(0, Math.min(quizLength, allWords.length));
+      pool = fisherYates(typePool).slice(0, Math.min(quizLength, typePool.length));
     }
 
     const qs: Question[] = pool.map(word => {
@@ -116,6 +122,10 @@ export default function Quiz() {
 
   if (!isStarted) {
     const hasWeakWords = weakWords.length >= 4;
+    const TYPES = ['verb', 'i-adj', 'na-adj', 'noun', 'expression', 'kanji'];
+    const countByType = (t: string) =>
+      allWords.filter(w => w.type.split(',').map(s => s.trim()).includes(t)).length;
+
     return (
       <div className="w-full max-w-lg mx-auto py-12 px-4 flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8">
         <div className="w-24 h-24 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
@@ -144,6 +154,42 @@ export default function Quiz() {
                   {n}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-muted-foreground mb-3">
+              Category
+              {filterType && <span className="ml-2 text-primary font-normal normal-case">({countByType(filterType)} words)</span>}
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setFilterType(null)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                  filterType === null
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-muted text-muted-foreground border-border hover:border-primary/40'
+                }`}
+              >
+                All ({allWords.length})
+              </button>
+              {TYPES.map(t => {
+                const count = countByType(t);
+                if (count === 0) return null;
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setFilterType(filterType === t ? null : t)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                      filterType === t
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-muted text-muted-foreground border-border hover:border-primary/40'
+                    }`}
+                  >
+                    {t} ({count})
+                  </button>
+                );
+              })}
             </div>
           </div>
 
