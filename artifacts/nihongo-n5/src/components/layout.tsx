@@ -1,23 +1,30 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { BookOpen, Layers, Target, BookType, MessageCircle, Home, Settings, CheckCircle2, Zap, Clock, Ban } from "lucide-react";
+import { BookOpen, Layers, Target, BookType, MessageCircle, Home, Settings, Zap, Clock, Ban, Star, ChevronRight } from "lucide-react";
 import { useProgress } from "@/hooks/use-progress";
+
+const quizSubItems = [
+  { href: "/quiz",          label: "Vocab Quiz", icon: Target, exact: true },
+  { href: "/quiz/masuform", label: "まず-Form",  icon: Star,   exact: false },
+  { href: "/quiz/teform",   label: "て-Form",    icon: Zap,    exact: false },
+  { href: "/quiz/taform",   label: "た-Form",    icon: Clock,  exact: false },
+  { href: "/quiz/naiform",  label: "ない-Form",  icon: Ban,    exact: false },
+];
+
+const mainNavItems = [
+  { href: "/",           label: "Home",    icon: Home },
+  { href: "/flashcards", label: "Cards",   icon: Layers },
+  { href: "/vocab",      label: "Vocab",   icon: BookType },
+  { href: "/quiz",       label: "Quiz",    icon: Target },
+  { href: "/grammar",    label: "Grammar", icon: BookOpen },
+  { href: "/phrases",    label: "Phrases", icon: MessageCircle },
+];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { hasSeenOnboarding, completeOnboarding } = useProgress();
 
-  const navItems = [
-    { href: "/", label: "Home", icon: Home },
-    { href: "/flashcards", label: "Cards", icon: Layers },
-    { href: "/vocab", label: "Vocab", icon: BookType },
-    { href: "/quiz", label: "Quiz", icon: Target },
-    { href: "/quiz/teform", label: "て-Form", icon: Zap },
-    { href: "/quiz/taform", label: "た-Form", icon: Clock },
-    { href: "/quiz/naiform", label: "ない-Form", icon: Ban },
-    { href: "/grammar", label: "Grammar", icon: BookOpen },
-    { href: "/phrases", label: "Phrases", icon: MessageCircle },
-  ];
+  const isOnQuiz = location === "/quiz" || location.startsWith("/quiz/");
 
   if (!hasSeenOnboarding) {
     return (
@@ -46,8 +53,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-[100dvh] pb-24 md:pb-0 md:pl-64 flex flex-col">
       {/* Mobile Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 px-2 py-2 flex justify-between items-center pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-        {navItems.map((item) => {
-          const active = location === item.href || (item.href !== "/" && location.startsWith(item.href));
+        {mainNavItems.map((item) => {
+          const active = item.href === "/"
+            ? location === "/"
+            : location === item.href || location.startsWith(item.href + "/");
           return (
             <Link key={item.href} href={item.href} className={`flex flex-col items-center justify-center w-full py-2 px-1 rounded-xl transition-all duration-200 ${active ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"}`}>
               <item.icon className={`w-5 h-5 mb-1 ${active ? "stroke-[2.5px]" : "stroke-2"}`} />
@@ -69,14 +78,59 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         
-        <div className="flex-1 px-4 py-2 space-y-2">
-          {navItems.map((item) => {
-            const active = location === item.href || (item.href !== "/" && location.startsWith(item.href));
+        <div className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
+          {mainNavItems.map((item) => {
+            const isQuizItem = item.href === "/quiz";
+            const active = isQuizItem
+              ? isOnQuiz
+              : item.href === "/"
+                ? location === "/"
+                : location === item.href || location.startsWith(item.href + "/");
+
             return (
-              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"}`}>
-                <item.icon className={`w-5 h-5 ${active ? "stroke-[2.5px]" : "stroke-2"}`} />
-                <span className="font-medium">{item.label}</span>
-              </Link>
+              <div key={item.href}>
+                <Link
+                  href={item.href}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                    active && !isQuizItem
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : isOnQuiz && isQuizItem
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  }`}
+                >
+                  <item.icon className={`w-5 h-5 ${active ? "stroke-[2.5px]" : "stroke-2"}`} />
+                  <span className="font-medium flex-1">{item.label}</span>
+                  {isQuizItem && (
+                    <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${isOnQuiz ? "rotate-90" : ""}`} />
+                  )}
+                </Link>
+
+                {/* Quiz sub-items — expand when on any /quiz route */}
+                {isQuizItem && isOnQuiz && (
+                  <div className="mt-1 ml-3 pl-3 border-l-2 border-primary/20 space-y-0.5">
+                    {quizSubItems.map((sub) => {
+                      const subActive = sub.exact
+                        ? location === sub.href
+                        : location === sub.href;
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
+                            subActive
+                              ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                          }`}
+                        >
+                          <sub.icon className={`w-4 h-4 ${subActive ? "stroke-[2.5px]" : "stroke-2"}`} />
+                          <span className="font-medium">{sub.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
@@ -91,6 +145,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col w-full max-w-4xl mx-auto">
+        {/* Mobile quiz sub-nav — shown on any quiz sub-route */}
+        {isOnQuiz && (
+          <div className="md:hidden sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border px-3 py-2">
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
+              {quizSubItems.map((sub) => {
+                const subActive = location === sub.href;
+                return (
+                  <Link
+                    key={sub.href}
+                    href={sub.href}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+                      subActive
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-muted text-muted-foreground border-transparent hover:border-border"
+                    }`}
+                  >
+                    <sub.icon className="w-3 h-3" />
+                    {sub.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {children}
       </main>
     </div>

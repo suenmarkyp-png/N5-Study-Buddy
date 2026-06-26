@@ -113,6 +113,54 @@ export function getTaForm(word: Word): TeForm | null {
   return teToTa(tf.kana, tf.romaji, tf.rule);
 }
 
+// まず-form (masu): godan changes last kana from う-row → い-row + ます
+const GODAN_MASU: Record<string, { kana: string; romajiDrop: number; romajiAdd: string; rule: string }> = {
+  'う': { kana: 'います', romajiDrop: 1,  romajiAdd: 'imasu',   rule: 'う → います (u→imasu)' },
+  'つ': { kana: 'ちます', romajiDrop: 3,  romajiAdd: 'chimasu', rule: 'つ → ちます (tsu→chimasu)' },
+  'る': { kana: 'ります', romajiDrop: 2,  romajiAdd: 'rimasu',  rule: 'る (godan) → ります (ru→rimasu)' },
+  'む': { kana: 'みます', romajiDrop: 2,  romajiAdd: 'mimasu',  rule: 'む → みます (mu→mimasu)' },
+  'ぶ': { kana: 'びます', romajiDrop: 2,  romajiAdd: 'bimasu',  rule: 'ぶ → びます (bu→bimasu)' },
+  'ぬ': { kana: 'にます', romajiDrop: 2,  romajiAdd: 'nimasu',  rule: 'ぬ → にます (nu→nimasu)' },
+  'く': { kana: 'きます', romajiDrop: 2,  romajiAdd: 'kimasu',  rule: 'く → きます (ku→kimasu)' },
+  'ぐ': { kana: 'ぎます', romajiDrop: 2,  romajiAdd: 'gimasu',  rule: 'ぐ → ぎます (gu→gimasu)' },
+  'す': { kana: 'します', romajiDrop: 2,  romajiAdd: 'shimasu', rule: 'す → します (su→shimasu)' },
+};
+
+export function getMasuForm(word: Word): TeForm | null {
+  const { kana, romaji, verbGroup } = word;
+  if (!verbGroup) return null;
+
+  if (verbGroup === 'irregular') {
+    if (kana.endsWith('する')) {
+      const base = kana.slice(0, -2);
+      const romajiBase = romaji.slice(0, -4);
+      return { kana: base + 'します', romaji: romajiBase + 'shimasu', rule: 'する → します (suru→shimasu)' };
+    }
+    if (kana === 'くる') {
+      return { kana: 'きます', romaji: 'kimasu', rule: 'くる → きます (kuru→kimasu)' };
+    }
+    return null;
+  }
+
+  if (verbGroup === 'ichidan') {
+    return {
+      kana: kana.slice(0, -1) + 'ます',
+      romaji: romaji.slice(0, -2) + 'masu',
+      rule: 'る-verb (ichidan): drop る → add ます',
+    };
+  }
+
+  // Godan
+  const lastKana = kana.slice(-1);
+  const map = GODAN_MASU[lastKana];
+  if (!map) return null;
+  return {
+    kana: kana.slice(0, -1) + map.kana,
+    romaji: romaji.slice(0, -map.romajiDrop) + map.romajiAdd,
+    rule: map.rule,
+  };
+}
+
 // ない-form: godan changes last kana to あ-row + ない (う→わ is a special exception)
 const GODAN_NAI: Record<string, { kana: string; romajiDrop: number; romajiAdd: string; rule: string }> = {
   'う': { kana: 'わない', romajiDrop: 1,  romajiAdd: 'wanai',  rule: 'う → わない (u→wanai)' },
