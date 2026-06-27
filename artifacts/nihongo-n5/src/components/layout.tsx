@@ -1,11 +1,12 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { BookOpen, Layers, Target, BookType, MessageCircle, Home, Settings, Zap, Clock, Ban, Star, ChevronRight, BotMessageSquare, PencilLine } from "lucide-react";
+import { BookOpen, Layers, Target, BookType, MessageCircle, Home, Settings, Zap, Clock, Ban, Star, ChevronRight, BotMessageSquare, PencilLine, Type } from "lucide-react";
 import { useProgress } from "@/hooks/use-progress";
 
 const quizSubItems = [
   { href: "/quiz",           label: "Vocab Quiz", icon: Target,     exact: true },
   { href: "/quiz/hiragana",  label: "Hiragana",   icon: PencilLine, exact: false },
+  { href: "/quiz/katakana",  label: "Katakana",   icon: Type,       exact: false },
   { href: "/quiz/masuform",  label: "まず-Form",  icon: Star,       exact: false },
   { href: "/quiz/teform",    label: "て-Form",    icon: Zap,        exact: false },
   { href: "/quiz/taform",    label: "た-Form",    icon: Clock,      exact: false },
