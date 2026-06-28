@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { BookOpen, Layers, Target, BookType, MessageCircle, Home, Settings, Zap, Clock, Ban, Star, ChevronRight, BotMessageSquare, PencilLine, Type } from "lucide-react";
+import { BookOpen, Layers, Target, BookType, MessageCircle, Home, Settings, Zap, Clock, Ban, Star, ChevronRight, BotMessageSquare, PencilLine, Type, RefreshCw } from "lucide-react";
 import { useProgress } from "@/hooks/use-progress";
 
 const quizSubItems = [
@@ -11,6 +11,7 @@ const quizSubItems = [
   { href: "/quiz/teform",    label: "て-Form",    icon: Zap,        exact: false },
   { href: "/quiz/taform",    label: "た-Form",    icon: Clock,      exact: false },
   { href: "/quiz/naiform",   label: "ない-Form",  icon: Ban,        exact: false },
+  { href: "/quiz/passive",   label: "Passive",    icon: RefreshCw,  exact: false },
 ];
 
 const mainNavItems = [
