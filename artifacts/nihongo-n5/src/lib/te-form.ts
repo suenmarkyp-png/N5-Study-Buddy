@@ -161,6 +161,54 @@ export function getMasuForm(word: Word): TeForm | null {
   };
 }
 
+// Passive form (受け身): godan changes last kana to あ-row + れる (う→わ special case)
+const GODAN_PASSIVE: Record<string, { kana: string; romajiDrop: number; romajiAdd: string; rule: string }> = {
+  'う': { kana: 'われる', romajiDrop: 1,  romajiAdd: 'wareru',  rule: 'う → われる (u→wareru)' },
+  'つ': { kana: 'たれる', romajiDrop: 3,  romajiAdd: 'tareru',  rule: 'つ → たれる (tsu→tareru)' },
+  'る': { kana: 'られる', romajiDrop: 2,  romajiAdd: 'rareru',  rule: 'る (godan) → られる (ru→rareru)' },
+  'む': { kana: 'まれる', romajiDrop: 2,  romajiAdd: 'mareru',  rule: 'む → まれる (mu→mareru)' },
+  'ぶ': { kana: 'ばれる', romajiDrop: 2,  romajiAdd: 'bareru',  rule: 'ぶ → ばれる (bu→bareru)' },
+  'ぬ': { kana: 'なれる', romajiDrop: 2,  romajiAdd: 'nareru',  rule: 'ぬ → なれる (nu→nareru)' },
+  'く': { kana: 'かれる', romajiDrop: 2,  romajiAdd: 'kareru',  rule: 'く → かれる (ku→kareru)' },
+  'ぐ': { kana: 'がれる', romajiDrop: 2,  romajiAdd: 'gareru',  rule: 'ぐ → がれる (gu→gareru)' },
+  'す': { kana: 'される', romajiDrop: 2,  romajiAdd: 'sareru',  rule: 'す → される (su→sareru)' },
+};
+
+export function getPassiveForm(word: Word): TeForm | null {
+  const { kana, romaji, verbGroup } = word;
+  if (!verbGroup) return null;
+
+  if (verbGroup === 'irregular') {
+    if (kana.endsWith('する')) {
+      const base = kana.slice(0, -2);
+      const romajiBase = romaji.slice(0, -4);
+      return { kana: base + 'される', romaji: romajiBase + 'sareru', rule: 'する → される (suru→sareru)' };
+    }
+    if (kana === 'くる') {
+      return { kana: 'こられる', romaji: 'korareru', rule: 'くる → こられる (kuru→korareru)' };
+    }
+    return null;
+  }
+
+  if (verbGroup === 'ichidan') {
+    return {
+      kana: kana.slice(0, -1) + 'られる',
+      romaji: romaji.slice(0, -2) + 'rareru',
+      rule: 'る-verb (ichidan): drop る → add られる',
+    };
+  }
+
+  // Godan
+  const lastKana = kana.slice(-1);
+  const map = GODAN_PASSIVE[lastKana];
+  if (!map) return null;
+  return {
+    kana: kana.slice(0, -1) + map.kana,
+    romaji: romaji.slice(0, -map.romajiDrop) + map.romajiAdd,
+    rule: map.rule,
+  };
+}
+
 // ない-form: godan changes last kana to あ-row + ない (う→わ is a special exception)
 const GODAN_NAI: Record<string, { kana: string; romajiDrop: number; romajiAdd: string; rule: string }> = {
   'う': { kana: 'わない', romajiDrop: 1,  romajiAdd: 'wanai',  rule: 'う → わない (u→wanai)' },
