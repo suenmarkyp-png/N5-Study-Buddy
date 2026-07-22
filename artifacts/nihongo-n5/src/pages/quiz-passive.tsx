@@ -91,15 +91,16 @@ export default function QuizPassive() {
     setSelectedAnswer(option);
     setIsCorrect(correct);
     if (correct) setScore(s => s + 1);
-    setTimeout(() => {
-      if (currentIndex + 1 < questions.length) {
-        setCurrentIndex(i => i + 1);
-        setSelectedAnswer(null);
-        setIsCorrect(null);
-      } else {
-        setIsFinished(true);
-      }
-    }, 1500);
+  };
+
+  const handleNext = () => {
+    if (currentIndex + 1 < questions.length) {
+      setCurrentIndex(i => i + 1);
+      setSelectedAnswer(null);
+      setIsCorrect(null);
+    } else {
+      setIsFinished(true);
+    }
   };
 
   // — Setup screen —
@@ -279,6 +280,21 @@ export default function QuizPassive() {
               </motion.div>
             )}
           </div>
+
+          {selectedAnswer !== null && (
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              onClick={handleNext}
+              className="mb-3 w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors shadow-md flex items-center justify-center gap-2"
+            >
+              {currentIndex + 1 < questions.length ? (
+                <><ArrowRight className="w-5 h-5" /> Next Question</>
+              ) : (
+                <><Trophy className="w-5 h-5" /> See Results</>
+              )}
+            </motion.button>
+          )}
 
           {/* Options */}
           <div className="grid grid-cols-2 gap-3 shrink-0">
