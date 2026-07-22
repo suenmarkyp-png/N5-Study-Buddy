@@ -120,7 +120,7 @@ export default function QuizMasuForm() {
         </div>
 
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">まず-Form Quiz</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">ます-Form Quiz</h1>
           <p className="text-muted-foreground text-lg">Practice polite (masu) verb conjugation.</p>
         </div>
 
@@ -282,7 +282,7 @@ export default function QuizMasuForm() {
             </span>
 
             <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-              What is the polite (まず) form of...
+              What is the polite (ます) form of...
             </p>
 
             <div className="space-y-1">
